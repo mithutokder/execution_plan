@@ -13,19 +13,24 @@ public class ExecutionPlanCalculator {
      * @return execution plan with the scripts ids which can be executed sequentially.
      */
     public List<Integer> prepareExecutionPlan(List<VulnerabilityScript> scripts) {
-        Map<Integer, List<Integer>> scriptAndDependencies = scripts.stream()
+        final Map<Integer, List<Integer>> scriptAndDependencies = scripts.stream()
                 .collect(Collectors.toMap(VulnerabilityScript::getScriptId,
                         VulnerabilityScript::getDependencies));
-        List<Integer> executionPlan = new ArrayList<>();
+
+        final List<Integer> executionPlan = new ArrayList<>();
+
         for (VulnerabilityScript script : scripts) {
-            if (!executionPlan.contains(script.getScriptId())) {
-                if (!(script.getDependencies() == null || script.getDependencies().isEmpty())) {
-                    List<Integer> dependencies = new ArrayList<>();
-                    prepareExecutionPlan(script.getDependencies(), scriptAndDependencies, dependencies);
-                    executionPlan.addAll(dependencies);
-                }
-                executionPlan.add(script.getScriptId());
+            if (executionPlan.contains(script.getScriptId())) {
+                // script id already added into the execution plan. Process the next scripts
+                continue;
             }
+
+            if (!(script.getDependencies() == null || script.getDependencies().isEmpty())) {
+                List<Integer> dependencies = new ArrayList<>();
+                prepareExecutionPlan(script.getDependencies(), scriptAndDependencies, dependencies);
+                executionPlan.addAll(dependencies);
+            }
+            executionPlan.add(script.getScriptId());
         }
         return executionPlan;
     }
